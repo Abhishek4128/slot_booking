@@ -6,8 +6,8 @@ Run: python server.py
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
-import mimetypes
-from pathlib import Path
+# import mimetypes
+# from pathlib import Path
 import mysql.connector
 import hashlib
 import os
@@ -16,18 +16,18 @@ from urllib.parse import urlparse, parse_qs
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 DB_CONFIG = {
-    'host':     'localhost',
-    'user':     'slot_user',
-    'password': 'Abhi123',       
-    'database': 'slot_booking_db',
+    'host':     'mysql.railway.internal',
+    'user':     'root',
+    'password': 'nqdyEBIeewACCFiBkvXqwzqQVMQKhuuZ',       
+    'database': 'railway',
     'port':     3306,
     'charset':  'utf8mb4',
 }
 
 SERVER_PORT   = 8000
-BASE_DIR     = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / 'frontend'
-ALLOWED_ORIGIN = '*'   
+# BASE_DIR     = Path(__file__).resolve().parent.parent
+# FRONTEND_DIR = BASE_DIR / 'frontend'
+ALLOWED_ORIGIN = 'https://glowing-pika-f770ac.netlify.app'   
 
 
 
@@ -198,22 +198,22 @@ class Handler(BaseHTTPRequestHandler):
     
     
 
-    def serve_file(self, file_path):
-        try:
-            with open(file_path, 'rb') as f:
-               content = f.read()
-            mime, _ = mimetypes.guess_type(str(file_path))
-            mime = mime or 'application/octet-stream'
-            self.send_response(200)
-            self.send_header('Content-Type', mime)
-            self.send_header('Content-Length', len(content))
-            self.send_header('Access-Control-Allow-Origin', ALLOWED_ORIGIN)
-            self.end_headers()
-            self.wfile.write(content)
-        except FileNotFoundError:
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b'File not found')
+    # def serve_file(self, file_path):
+    #     try:
+    #         with open(file_path, 'rb') as f:
+    #            content = f.read()
+    #         mime, _ = mimetypes.guess_type(str(file_path))
+    #         mime = mime or 'application/octet-stream'
+    #         self.send_response(200)
+    #         self.send_header('Content-Type', mime)
+    #         self.send_header('Content-Length', len(content))
+    #         self.send_header('Access-Control-Allow-Origin', ALLOWED_ORIGIN)
+    #         self.end_headers()
+    #         self.wfile.write(content)
+    #     except FileNotFoundError:
+    #         self.send_response(404)
+    #         self.end_headers()
+    #         self.wfile.write(b'File not found')
     
 
 
@@ -233,10 +233,9 @@ class Handler(BaseHTTPRequestHandler):
         path   = parsed.path
         qs     = parse_qs(parsed.query)
 
-        if not path.startswith('/api/'):
-            if path == '/' or path == '':
-                return self.serve_file(FRONTEND_DIR / 'index.html')
-            return self.serve_file(FRONTEND_DIR / path.lstrip('/'))
+        # Health check
+        if path == '/':
+           return self.send_json({'status': 'SlotBook API is running'})
         if path == '/api/slots':
             today  = date.today().isoformat()
             d_filt = qs.get('date',   [None])[0]
@@ -418,6 +417,7 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == '__main__':
     print("\n🔧 Setting up database...")
     setup_db()
-    print(f"\n🚀 Server running at → http://localhost:{SERVER_PORT}")
+    port = int(os.environ.get('PORT', 8000)) 
+    print(f"\n🚀 Server running at → http://localhost:{port}")
     print("   Press Ctrl+C to stop.\n")
-    HTTPServer(('0.0.0.0', SERVER_PORT), Handler).serve_forever()
+    HTTPServer(('0.0.0.0', port), Handler).serve_forever()
