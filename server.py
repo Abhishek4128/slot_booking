@@ -1,8 +1,4 @@
-"""
-server.py — Pure Python HTTP Backend
-No Django, No Flask — only built-in libraries + mysql-connector-python
-Run: python server.py
-"""
+
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
@@ -12,6 +8,7 @@ import mysql.connector
 import hashlib
 import os
 from datetime import date
+from datetime import timedelta
 from urllib.parse import urlparse, parse_qs
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
@@ -121,8 +118,11 @@ def setup_db():
    
     cur.execute("SELECT COUNT(*) FROM slots")
     if cur.fetchone()[0] == 0:
-        today = date.today().isoformat()
-        samples = [
+        today = date.today()
+        samples = []
+        for i in range(7):  # create slots for next 7 days
+           day = (today + timedelta(days=i)).isoformat()
+           samples.extend([
             ("Morning Standup",      "Daily team sync.",          today, "09:00", "10:00", 5,  "Conference Room A"),
             ("UX Design Review",     "Review wireframes.",        today, "10:00", "11:00", 4,  "Design Lab"),
             ("Product Strategy",     "Roadmap planning.",         today, "11:00", "12:00", 6,  "Board Room"),
@@ -133,7 +133,7 @@ def setup_db():
             ("Dev Workshop",         "Hands-on coding session.",  today, "09:00", "10:00", 6,  "Workshop Room"),
             ("Client Onboarding",    "New client welcome.",       today, "11:00", "12:00", 4,  "Online (Meet)"),
             ("Data Analytics Brief", "Weekly metrics review.",    today, "14:00", "15:00", 5,  "Analytics Suite"),
-        ]
+           ])
         cur.executemany("""
             INSERT INTO slots (title, description, slot_date,
                                start_time, end_time, capacity, location)
